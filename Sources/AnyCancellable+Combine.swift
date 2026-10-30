@@ -1,6 +1,6 @@
 //
 //  AnyCancellable+Combine.swift
-//  CombineUI
+//  Combinable
 //
 //  Created by LC on 2025/10/31.
 //
@@ -10,14 +10,15 @@ import Foundation
 
 private var cancellablesKey: UInt8 = 0
 
-extension CombineUIWrapper where Base: NSObject {
+extension CombinableWrapper where Base: NSObject {
+    /// Cancellables retained by this object. They are cancelled when the object is deallocated.
     public var cancellables: Set<AnyCancellable> {
         get {
             if let wrapper = objc_getAssociatedObject(base, &cancellablesKey) as? CancellableWrapper {
                 return wrapper.cancellables
             }
             let cancellables = Set<AnyCancellable>()
-            base.cui.cancellables = cancellables
+            base.cb.cancellables = cancellables
             return cancellables
         }
         set {
@@ -27,17 +28,19 @@ extension CombineUIWrapper where Base: NSObject {
     }
 }
 
-extension CombineUIWrapper where Base: AnyCancellable {
+extension CombinableWrapper where Base: AnyCancellable {
+    /// Stores this cancellable in the given object's `cancellables` set.
+    /// - Parameter object: The object that should retain the subscription.
     public func store(in object: NSObject) {
-        base.store(in: &object.cui.cancellables)
+        base.store(in: &object.cb.cancellables)
     }
 }
 
+/// Box that lets a cancellable set be stored as an associated object.
 private class CancellableWrapper {
     let cancellables: Set<AnyCancellable>
-    
+
     init(cancellables: Set<AnyCancellable>) {
         self.cancellables = cancellables
     }
 }
-

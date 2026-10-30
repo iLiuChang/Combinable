@@ -1,6 +1,6 @@
 //
 //  UIControlPropertyPublisher.swift
-//  CombineUI
+//  Combinable
 //
 //  Created by LC on 2025/10/30.
 //
@@ -9,14 +9,22 @@ import Combine
 import Foundation
 import UIKit
 
+/// A publisher that reads a control property and emits it when the specified events occur.
+///
+/// The current value is also sent once when the subscriber requests demand.
 public struct UIControlPropertyPublisher<Control: UIControl, Value>: Publisher {
     public typealias Output = Value
     public typealias Failure = Never
-    
+
     private let control: Control
     private let controlEvents: Control.Event
     private let keyPath: KeyPath<Control, Value>
-    
+
+    /// Creates a publisher for a property of a control.
+    /// - Parameters:
+    ///   - control: The control to observe.
+    ///   - events: Control events that trigger an emission.
+    ///   - keyPath: The property read when an event occurs.
     public init(control: Control,
                 events: Control.Event,
                 keyPath: KeyPath<Control, Value>) {
@@ -24,13 +32,13 @@ public struct UIControlPropertyPublisher<Control: UIControl, Value>: Publisher {
         self.controlEvents = events
         self.keyPath = keyPath
     }
-    
+
     public func receive<S: Subscriber>(subscriber: S) where S.Failure == Failure, S.Input == Output {
         let subscription = Subscription(subscriber: subscriber,
                                         control: control,
                                         event: controlEvents,
                                         keyPath: keyPath)
-        
+
         subscriber.receive(subscription: subscription)
     }
 }
@@ -52,6 +60,7 @@ extension UIControlPropertyPublisher {
         }
 
         func request(_ demand: Subscribers.Demand) {
+            // Send the current value once so subscribers do not wait for the next event.
             if !didEmitInitial,
                 demand > .none,
                 let control = control,

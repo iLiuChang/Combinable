@@ -1,6 +1,6 @@
 //
 //  UIControlEventPublisher.swift
-//  CombineUI
+//  Combinable
 //
 //  Created by LC on 2025/10/30.
 //
@@ -9,6 +9,7 @@ import Combine
 import Foundation
 import UIKit
 
+/// A publisher that emits when the specified control events occur.
 public struct UIControlEventPublisher<Control: UIControl>: Publisher {
     public typealias Output = Void
     public typealias Failure = Never
@@ -16,6 +17,10 @@ public struct UIControlEventPublisher<Control: UIControl>: Publisher {
     private let control: Control
     private let controlEvents: Control.Event
 
+    /// Creates a publisher for control events.
+    /// - Parameters:
+    ///   - control: The control to observe.
+    ///   - events: Control events that trigger an emission.
     public init(control: Control,
                 events: Control.Event) {
         self.control = control
