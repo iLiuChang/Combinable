@@ -17,6 +17,7 @@ public extension CombinableWrapper where Base: UITextView {
 
             base.publisher(for: \.text)
         )
+        .removeDuplicates()
         .eraseToAnyPublisher()
     }
 }

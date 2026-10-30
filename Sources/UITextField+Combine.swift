@@ -16,6 +16,7 @@ public extension CombinableWrapper where Base: UITextField {
 
             base.publisher(for: \.text)
         )
+        .removeDuplicates()
         .eraseToAnyPublisher()
     }
 
@@ -26,6 +27,16 @@ public extension CombinableWrapper where Base: UITextField {
 
             base.publisher(for: \.attributedText)
         )
+        .removeDuplicates { previous, current in
+            switch (previous, current) {
+            case (nil, nil):
+                return true
+            case let (previous?, current?):
+                return previous.isEqual(to: current)
+            default:
+                return false
+            }
+        }
         .eraseToAnyPublisher()
     }
 
