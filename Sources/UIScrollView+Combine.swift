@@ -15,22 +15,27 @@ public extension CombinableWrapper where Base: UIScrollView {
             .eraseToAnyPublisher()
     }
 
-    /// Emits when the scroll position passes the bottom of the content.
+    /// Emits when the scroll position comes within `offset` points of the bottom.
     ///
-    /// The threshold is the greater of `offset` and the content offset at which the bottom becomes visible.
-    /// - Parameter offset: Minimum vertical offset that must be exceeded. Defaults to `0`.
+    /// Also emits when the content is shorter than the visible area. A `contentSize` height of zero does not emit.
+    /// - Parameter offset: Distance from the bottom, in points, at which to emit. Defaults to `0`.
     func reachedBottomPublisher(offset: CGFloat = 0) -> AnyPublisher<Void, Never> {
-        contentOffsetPublisher
-            .map { [weak base] contentOffset -> Bool in
-                guard let self = base else { return false }
-                let visibleHeight = self.frame.height - self.contentInset.top - self.contentInset.bottom
-                let yDelta = contentOffset.y + self.contentInset.top
-                let threshold = max(offset, self.contentSize.height - visibleHeight)
-                return yDelta > threshold
-            }
-            .removeDuplicates()
-            .filter { $0 }
-            .map { _ in () }
-            .eraseToAnyPublisher()
+        Publishers.CombineLatest(
+            contentOffsetPublisher,
+            base.publisher(for: \.contentSize)
+        )
+        .map { [weak base] contentOffset, contentSize -> Bool in
+            guard let scrollView = base else { return false }
+            let inset = scrollView.adjustedContentInset
+            let visibleHeight = scrollView.bounds.height - inset.top - inset.bottom
+            guard contentSize.height > 0, visibleHeight > 0 else { return false }
+            let y = contentOffset.y + inset.top
+            let threshold = contentSize.height - visibleHeight - offset
+            return y >= threshold
+        }
+        .removeDuplicates()
+        .filter { $0 }
+        .map { _ in () }
+        .eraseToAnyPublisher()
     }
 }

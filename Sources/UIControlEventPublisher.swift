@@ -40,16 +40,25 @@ extension UIControlEventPublisher {
     private final class Subscription<S: Subscriber, C: UIControl>: Combine.Subscription where S.Input == Void {
         private var subscriber: S?
         weak private var control: C?
+        private let event: C.Event
 
         init(subscriber: S, control: C, event: C.Event) {
             self.subscriber = subscriber
             self.control = control
+            self.event = event
             control.addTarget(self, action: #selector(processControlEvent), for: event)
+        }
+
+        deinit {
+            cancel()
         }
 
         func request(_ demand: Subscribers.Demand) { }
 
         func cancel() {
+            // UIControl does not retain its target, so the target must be removed before this object is released.
+            control?.removeTarget(self, action: #selector(processControlEvent), for: event)
+            control = nil
             subscriber = nil
         }
 

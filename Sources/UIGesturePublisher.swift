@@ -60,11 +60,17 @@ extension UIGesturePublisher {
             self.gesture = gesture
         }
 
+        deinit {
+            cancel()
+        }
+
         func request(_ demand: Subscribers.Demand) { }
 
         func cancel() {
             if let gesture = gesture {
                 view?.removeGestureRecognizer(gesture)
+                // The recognizer retains its target. Dropping this reference breaks that cycle.
+                self.gesture = nil
             }
             subscriber = nil
         }
